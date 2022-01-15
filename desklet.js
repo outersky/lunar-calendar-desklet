@@ -10,16 +10,19 @@ const Clutter = imports.gi.Clutter;
 const GdkPixbuf = imports.gi.GdkPixbuf;
 const Cogl = imports.gi.Cogl;
 
-const UUID = "calendar@deeppradhan";
+const UUID = "calendar@outersky";
 
 const DESKLET_DIR = imports.ui.deskletManager.deskletMeta[UUID].path;
 
 imports.searchPath.push(DESKLET_DIR);
 
 let Calendar = typeof require !== "undefined" ? require("./calendar") : imports.ui.deskletManager.desklets[UUID].calendar;
+let LunarCalendar = typeof require !== "undefined" ? require("./lunar") : imports.ui.deskletManager.desklets[UUID].lunar;
 
 const STYLE_TEXT_CENTER = "text-align: center;";
-const STYLE_LABEL_DAY = "padding: 0, 1.5pt; " + STYLE_TEXT_CENTER;
+const STYLE_LABEL_DAY = "padding: 3pt 3pt 3pt 1pt; " + STYLE_TEXT_CENTER;
+const STYLE_LUNAR_DAY = " padding: 1pt 3pt 3pt 8pt; font-family: '新宋体'; font-size: 10pt; font-weight:100; " + STYLE_TEXT_CENTER;
+const STYLE_LUNAR_DAY1 = " padding: 1pt 3pt 3pt 8pt; font-family: '新宋体'; color:red; font-size: 10pt; font-weight:100; " + STYLE_TEXT_CENTER;
 
 
 function MyDesklet(metadata, desklet_id) {
@@ -70,6 +73,7 @@ MyDesklet.prototype = {
 		this.labelNext = new St.Label();
 		this.labelMonth = new St.Label();
 		this.labelDays = [];
+		this.lunarDays = [];
 
 		this.tableMonth = new St.Table();
 
@@ -115,6 +119,10 @@ MyDesklet.prototype = {
 			this.labelDays[i] = new St.Label();
 			this.labelDays[i].style = STYLE_LABEL_DAY;
 			this.labelDays[i].set_text(String(i + 1));
+
+			this.lunarDays[i] = new St.Label();
+			this.lunarDays[i].style = STYLE_LUNAR_DAY;
+			this.lunarDays[i].set_text("初"+i);
 		}
 
 		//////// Calendar Layout ////////
@@ -141,9 +149,16 @@ MyDesklet.prototype = {
 			Mainloop.source_remove(this.timeout);
 		this.updateCalendar();
 	},
+	updateCalendar: function() {
+		try{
+			this.updateCalendar0();
+		}catch(e){
+			global.log('updateCalendar0 error',e);
+		}
+	},
 
 	/* Method to update the Desklet layout*/
-	updateCalendar: function() {
+	updateCalendar0: function() {
 
 		let now = new Date();
 
@@ -177,11 +192,20 @@ MyDesklet.prototype = {
 					+ (i === 6 ? " color: " + this.colourSaturdays + ";" : "");
 
 		// Remove currently added days
-		for (let i = 0; i < 31; i++)
-			if (this.labelDays[i].get_parent())
+		for (let i = 0; i < 31; i++){
+			if (this.labelDays[i].get_parent()){
 				this.tableMonth.remove_child(this.labelDays[i]);
+			}
 
-		for (let i = 0, row = 2, col = (new Date(this.date.getFullYear(), this.date.getMonth(), 1)).getDay(),
+			if (this.lunarDays[i] && this.lunarDays[i].get_parent()){
+				this.tableMonth.remove_child(this.lunarDays[i]);
+			}
+		}
+
+		let year = this.date.getFullYear();
+		let month = this.date.getMonth();
+
+		for (let i = 0, row = 0, col = (new Date(this.date.getFullYear(), this.date.getMonth(), 1)).getDay(),
 				monthLength = Calendar.daysInMonth(this.date.getMonth(), this.date.getFullYear()); i < monthLength; i++) {
 			this.labelDays[i].style = STYLE_LABEL_DAY;
 			// Set specified colour of Sunday and Saturday
@@ -193,10 +217,19 @@ MyDesklet.prototype = {
 			// Emphasise today's date 
 			if (this.date.getFullYear() == now.getFullYear() && this.date.getMonth() == now.getMonth()
 					&& i + 1 === now.getDate())
-				this.labelDays[i].style = this.labelDays[i].style + "background-color: "
-						+ this.colourText + "; color: " + this.colourBackground
-						+ "; border-radius: " + (this.fontSize / 4) + "pt;";
-			this.tableMonth.add(this.labelDays[i], {row: row, col: col});
+				this.labelDays[i].style = this.labelDays[i].style + " font-weight: 600; font-size: 18pt;";
+			this.tableMonth.add(this.labelDays[i], {row: 2+row*2, col: col}); // add days
+
+			var lunar = LunarCalendar.solarToLunar(year,month+1, i+1);
+			if(lunar.lunarDayName=='初一'){
+				this.lunarDays[i].set_text(lunar.lunarMonthName);
+				this.lunarDays[i].style = STYLE_LUNAR_DAY1;
+			}else{
+				this.lunarDays[i].set_text(lunar.lunarDayName);
+				this.lunarDays[i].style = STYLE_LUNAR_DAY;
+			}
+			
+			this.tableMonth.add(this.lunarDays[i], {row: 2+row*2+1, col: col}); // add lunar days
 			col++;
 			if (col > 6) {
 				row++;
