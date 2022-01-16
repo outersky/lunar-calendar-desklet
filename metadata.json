@@ -2,11 +2,11 @@
     "comments": "Calendar Desklet provides a highly configurable desklet to display current date and browsable months. It has a number of possible customisations.",
     "contributors": "Deep Pradhan, outersky",
     "description": "Configurable Calendar desklet",
-    "name": "Calendar desklet with lunar calendar",
+    "name": "Lunar calendar desklet",
     "prevent-decorations": true,
     "uuid": "calendar@outersky",
     "version": "1.0",
-    "website": "https://github.com/kanchudeep",
-    "author": "kanchudeep",
-    "last-edited": 1640878417
+    "website": "https://github.com/outersky",
+    "author": "outersky",
+    "last-edited": 1640878418
 }

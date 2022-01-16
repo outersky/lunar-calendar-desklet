@@ -6,6 +6,8 @@ var MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
 var WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday",
 		"Wednesday", "Thursday", "Friday", "Saturday"];
 
+var WEEKDAY_NAMES_CN= ['日','一','二','三','四','五','六'];
+
 // Method to return a Date (first day) after adding specified months to specified Date
 function dateMonthAdd(date, add) {
 	return new Date(date.getFullYear(), date.getMonth() + add, 1);

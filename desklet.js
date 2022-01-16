@@ -87,7 +87,8 @@ MyDesklet.prototype = {
 		this.labelWeekdays = [];
 		for (let i = 0; i < 7; i++) {
 			this.labelWeekdays[i] = new St.Label();
-			this.labelWeekdays[i].set_text(Calendar.WEEKDAY_NAMES[i].substring(0, 1));
+			// this.labelWeekdays[i].set_text(Calendar.WEEKDAY_NAMES[i].substring(0, 1));
+			this.labelWeekdays[i].set_text(Calendar.WEEKDAY_NAMES_CN[i]);
 			this.tableMonth.add(this.labelWeekdays[i], {row: 1, col: i});
 		}
 
@@ -95,14 +96,8 @@ MyDesklet.prototype = {
 		this.buttonMonth.set_child(this.labelMonth);
 		this.buttonNext.set_child(this.labelNext);
 
-		this.buttonPrevious.connect("clicked", Lang.bind(this, function() {
-			this.date = Calendar.dateMonthAdd(this.date, -1);
-			this.updateCalendar();
-		}));
-		this.buttonNext.connect("clicked", Lang.bind(this, function() {
-			this.date = Calendar.dateMonthAdd(this.date, 1);
-			this.updateCalendar();
-		}));
+		this.buttonPrevious.connect("clicked", Lang.bind(this, this.onClickPrevious));
+		this.buttonNext.connect("clicked", Lang.bind(this, this.onClickNext));
 
 		this.tooltipMonth = new Tooltips.Tooltip(this.buttonMonth);
 		this.tooltipPrevious = new Tooltips.Tooltip(this.buttonPrevious,
@@ -132,28 +127,42 @@ MyDesklet.prototype = {
 		this.updateCalendar();
 	},
 
+	onClickPrevious(){
+		global.log('click previous');
+		this.date = Calendar.dateMonthAdd(this.date, -1);
+		this.updateCalendar();
+		global.log('handle previous ok');
+	},
+
+	onClickNext(){
+		global.log('click next');
+		this.date = Calendar.dateMonthAdd(this.date, 1);
+		this.updateCalendar();
+		global.log('handle next ok');
+	},
+
 	// Called on user clicking the desklet
 	on_desklet_clicked: function(event) {
+		// global.log(' desklet clicked ');
 		this.date = new Date();
-		this.updateCalendar();
+		this.updateCalendar(); // 任意点击以下，自动还原
 	},
 	
 	on_desklet_removed: function() {
 		this.removed = true;
-		Mainloop.source_remove(this.timeout);
+		// Mainloop.source_remove(this.timeout);
 	},
 	
 	// Refresh on change of settings
 	onSettingChanged: function() {
-		if (this.timeout)
-			Mainloop.source_remove(this.timeout);
+		// if (this.timeout) Mainloop.source_remove(this.timeout);
 		this.updateCalendar();
 	},
 	updateCalendar: function() {
 		try{
 			this.updateCalendar0();
 		}catch(e){
-			global.log('updateCalendar0 error',e);
+			global.logError(e);
 		}
 	},
 
@@ -182,7 +191,8 @@ MyDesklet.prototype = {
 			this.boxLayoutToday.add(this.labelTime);
 
 		//////// Month Panel ////////
-		this.labelMonth.set_text(Calendar.MONTH_NAMES[this.date.getMonth()].substring(0, 3) + " " + this.date.getFullYear());
+		// this.labelMonth.set_text(Calendar.MONTH_NAMES[this.date.getMonth()].substring(0, 3) + " " + this.date.getFullYear());
+		this.labelMonth.set_text(this.date.getFullYear() + ' 年 ' + (this.date.getMonth()+1) + ' 月');
 
 		// Set weekday style
 		for (let i = 0; i < 7; i++)
@@ -264,7 +274,8 @@ MyDesklet.prototype = {
 	updateValues: function() {
 
 		if (this.removed) {
-			this.timeout = 0;
+			// this.timeout = 0;
+			global.log('calendar desklet removed!');
 			return false;
 		}
 
@@ -284,7 +295,7 @@ MyDesklet.prototype = {
 				+ Calendar.zeroPad(now.getMinutes()));
 
 		// Setup loop to update values
-		this.timeout = Mainloop.timeout_add_seconds(this.showTime ? 1 : 10, Lang.bind(this, this.updateValues));
+		// this.timeout = Mainloop.timeout_add_seconds(this.showTime ? 1 : 10, Lang.bind(this, this.updateValues));
 	}
 };
 
