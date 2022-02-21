@@ -96,8 +96,10 @@ MyDesklet.prototype = {
 		this.buttonMonth.set_child(this.labelMonth);
 		this.buttonNext.set_child(this.labelNext);
 
-		this.buttonPrevious.connect("clicked", Lang.bind(this, this.onClickPrevious));
-		this.buttonNext.connect("clicked", Lang.bind(this, this.onClickNext));
+		let fnClickPrevious = Lang.bind(this, this.onClickPrevious);
+		let fnClickNext = Lang.bind(this, this.onClickNext);
+		this.buttonPrevious.connect("clicked", async ()=>fnClickPrevious());
+		this.buttonNext.connect("clicked",async ()=>fnClickNext());
 
 		this.tooltipMonth = new Tooltips.Tooltip(this.buttonMonth);
 		this.tooltipPrevious = new Tooltips.Tooltip(this.buttonPrevious,
@@ -125,16 +127,22 @@ MyDesklet.prototype = {
 		this.setHeader("Calendar");
 
 		this.updateCalendar();
+
+		//每10分钟刷新一下，不然过了半夜12点也不会自动更新日期
+		setInterval(()=>{
+			this.date = new Date();
+			this.updateCalendar();
+		}, 1000*60*10);
 	},
 
-	onClickPrevious(){
+	async onClickPrevious(){
 		global.log('click previous');
 		this.date = Calendar.dateMonthAdd(this.date, -1);
 		this.updateCalendar();
 		global.log('handle previous ok');
 	},
 
-	onClickNext(){
+	async onClickNext(){
 		global.log('click next');
 		this.date = Calendar.dateMonthAdd(this.date, 1);
 		this.updateCalendar();
@@ -143,7 +151,7 @@ MyDesklet.prototype = {
 
 	// Called on user clicking the desklet
 	on_desklet_clicked: function(event) {
-		// global.log(' desklet clicked ');
+		global.log(' desklet clicked ');
 		this.date = new Date();
 		this.updateCalendar(); // 任意点击以下，自动还原
 	},
@@ -160,6 +168,7 @@ MyDesklet.prototype = {
 	},
 	updateCalendar: function() {
 		try{
+			global.log(`[${UUID}] call updateCalendar`);
 			this.updateCalendar0();
 		}catch(e){
 			global.logError(e);
@@ -283,7 +292,7 @@ MyDesklet.prototype = {
 
 		if (this.lastUpdate.fullYear !== now.getFullYear() || this.lastUpdate.month !== now.getMonth() || this.lastUpdate.date !== now.getDate()) {
 			this.updateCalendar();
-			return;
+			return false;
 		}
 
 		//////// Today Panel ////////
@@ -294,6 +303,7 @@ MyDesklet.prototype = {
 		this.labelTime.set_text(Calendar.zeroPad(now.getHours()) + ":"
 				+ Calendar.zeroPad(now.getMinutes()));
 
+		return false;
 		// Setup loop to update values
 		// this.timeout = Mainloop.timeout_add_seconds(this.showTime ? 1 : 10, Lang.bind(this, this.updateValues));
 	}
